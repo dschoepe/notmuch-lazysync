@@ -1,65 +1,59 @@
-#!/usr/bin/env python3
-# Wrapper script around notmuch to log tag modifications
-import fileinput
-import os
-import os.path
-import sys
-import subprocess
-import psutil
-from subprocess import call, Popen, check_output
+#!/bin/zsh
 
-def handle_lines(f, remove_arg):
-    lines = []
-    for line in fileinput.input(f):
-        line = line.rstrip("\n")
-        call(["notmuch-lazysync", "record", "--", "notmuch", "tag"] +
-             remove_arg + [line])
-        lines.append(line)
-    return lines
+function handle_file {
+    while read line; do
+        notmuch-lazysync record -v -- notmuch tag $remove $line
+    done <$1
+}
 
-def die(msg):
-    print(msg, file=sys.stderr)
+notmuch_bin=""
+which -a notmuch | while read bin; do
+    if [[ "$bin" != "$0" ]]; then
+       notmuch_bin="$bin"
+       break
+    fi
+done
 
-notmuch_bins = check_output(["which", "-a", "notmuch"]).decode('UTF-8').split("\n")
-notmuch_binary = None
-for b in notmuch_bins:
-    if os.path.abspath(sys.argv[0]) == os.path.abspath(b):
-        continue
-    else:
-        notmuch_binary = b
-        break
-if notmuch_binary is None:
-    die("Can't find original notmuch binary in path")
+if [[ -z $notmuch_bin ]]; then
+    echo "No notmuch binary found" >&2
+    exit 1
+fi
 
-proc = psutil.Process(os.getppid())
-if proc.name() == "notmuch-lazysyn":
-    sys.exit(call([notmuch_binary] + sys.argv[1:]))
-
-if len(sys.argv) > 1 and sys.argv[1] == "tag":
-    input_file = None
-    batch_mode = False
-    remove = False
-    
-    for arg in sys.argv[2:]:
-        if arg == "--batch":
-            batch_mode = True
-        elif arg.startswith("--input="):
-            input_file = arg[len("--input="):]
-        elif arg == "--remove-all":
-            remove = True
-        elif arg == "--":
-            break
-    remove_arg = ["--remove-all"] if remove else []
-    if input_file:
-        ls = handle_lines(input_file, remove_arg)
-        call([notmuch_binary] + sys.argv[1:])
-    elif batch_mode:
-        proc = Popen([notmuch_binary] + sys.argv[1:], stdin=subprocess.PIPE,
-                     universal_newlines=True)
-        ls = handle_lines('-', remove_arg)
-        proc.communicate("\n".join(ls))
-    else:
-        call([notmuch_binary] + sys.argv[1:])
-        call(["notmuch-lazysync", "record", "--", "notmuch"] + sys.argv[1:])
-else:
-    sys.exit(call([notmuch_binary] + sys.argv[1:]))
+if [[ "$1" == "tag" ]]; then
+    # note that comm truncates the name after 15 characters
+    if [[ $(ps -p $PPID -o comm=) != "notmuch-lazysyn" ]]; then
+        input=""
+        batch=0
+        remove=""
+        for arg in "$@"; do
+            if [[ "$arg" == "--batch" ]]; then
+                echo "batch"
+                batch=1
+            elif [[ "$arg" =~ '^--input=(.*)$' ]]; then
+                input=$match[1]
+            elif [[ "$arg" == "--remove-all" ]]; then
+                 remove="--remove-all"
+            elif [[ "$arg" == "--" ]]; then
+                break
+            fi
+        done
+        if [[ $input != "" && -f $input ]]; then
+            handle_file "$input"
+            $notmuch_bin "$@"
+        elif [[ $batch -ne 0 ]]; then
+            tmpfile=`mktemp`
+            tee $tmpfile | $notmuch_bin "$@"
+            retval=$?
+            handle_file "$tmpfile"
+            rm $tmpfile
+            exit $retval
+        else
+            notmuch-lazysync record -v -- notmuch "$@" &
+            $notmuch_bin "$@"
+        fi
+    else
+        $notmuch_bin "$@"
+    fi
+else
+    $notmuch_bin "$@"
+fi

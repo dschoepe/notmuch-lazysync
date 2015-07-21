@@ -40,9 +40,8 @@ replay` after new incoming mail has been sorted. Moreover, tag
 modifications need to be logged. If your frontend does this by calling
 the notmuch binary, put the `notmuch` script included with this tool
 somewhere in your `$PATH` such that it occurs before the real
-`notmuch` binary. Note that this script depends on the python library
-`psutil`.
-
+`notmuch` binary. Note that this script needs [zsh](http://www.zsh.org/)
+to be installed.
 
 For frontends using notmuch bindings directly, tag operations need to
 be logged through hook functionality in the frontend.
