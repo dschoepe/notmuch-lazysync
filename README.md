@@ -47,3 +47,16 @@ in the Emacs frontend, this can be achieved using `notmuch-after-tag-hook`:
                                   "notmuch-lazysync" "record" "--"
                                   "notmuch" "tag" (append tag-changes (list "--" query)))))
 
+Tag changes performed using the `notmuch` binary directly can be
+logged, by putting the following script with the name `notmuch` in a
+directory that occurs before `/usr/bin` in `$PATH`:
+
+    #!/bin/sh
+    if [[ "$1" == "tag" ]]; then
+        # note that comm truncates the name after 15 characters
+        if [[ $(ps -p $PPID -o comm=) != "notmuch-lazysyn" ]]; then
+            notmuch-lazysync record -v -- notmuch "$@"
+        fi
+    fi
+    # perform the original command
+    /usr/bin/notmuch "$@"
