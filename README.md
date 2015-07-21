@@ -47,9 +47,9 @@ in the Emacs frontend, this can be achieved using `notmuch-after-tag-hook`:
                                   "notmuch-lazysync" "record" "--"
                                   "notmuch" "tag" (append tag-changes (list "--" query)))))
 
-Tag changes performed using the `notmuch` binary directly can be
-logged, by putting the following script with the name `notmuch` in a
-directory that occurs before `/usr/bin` in `$PATH`:
+In addition, tag changes performed using the `notmuch` binary directly
+can be logged by putting the following script with the name `notmuch`
+in a directory that occurs before `/usr/bin` in `$PATH`:
 
     #!/bin/sh
     if [[ "$1" == "tag" ]]; then
