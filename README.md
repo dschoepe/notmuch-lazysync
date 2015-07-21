@@ -35,28 +35,14 @@ The `num_hosts` option specifies the total number of machines to be
 synchronized. This option is only needed to remove old entries from
 the database.
 
-To use this tool to synchronize notmuch tags, run `notmuch-lazysync replay`
-after new incoming mail has been sorted. Moreover, instruct your notmuch
-frontend to record tag changes. When the user tags mails matching a query `Q`
-with tag `+t`, run `notmuch-lazysync record -- notmuch tag +t -- Q`. For example,
-in the Emacs frontend, this can be achieved using `notmuch-after-tag-hook`:
+To use this tool to synchronize notmuch tags, run `notmuch-lazysync
+replay` after new incoming mail has been sorted. Moreover, tag
+modifications need to be logged. If your frontend does this by calling
+the notmuch binary, put the `notmuch` script included with this tool
+somewhere in your `$PATH` such that it occurs before the real
+`notmuch` binary. Note that this script depends on the python library
+`psutil`.
 
-    (add-hook 'notmuch-after-tag-hook
-    	  (lambda ()
-    	    (apply 'start-process "notmuch-lazysync" nil
-                                  "notmuch-lazysync" "record" "--"
-                                  "notmuch" "tag" (append tag-changes (list "--" query)))))
 
-In addition, tag changes performed using the `notmuch` binary directly
-can be logged by putting the following script with the name `notmuch`
-in a directory that occurs before `/usr/bin` in `$PATH`:
-
-    #!/bin/sh
-    if [[ "$1" == "tag" ]]; then
-        # note that comm truncates the name after 15 characters
-        if [[ $(ps -p $PPID -o comm=) != "notmuch-lazysyn" ]]; then
-            notmuch-lazysync record -v -- notmuch "$@"
-        fi
-    fi
-    # perform the original command
-    /usr/bin/notmuch "$@"
+For frontends using notmuch bindings directly, tag operations need to
+be logged through hook functionality in the frontend.
