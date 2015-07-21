@@ -27,7 +27,6 @@ if [[ "$1" == "tag" ]]; then
         remove=""
         for arg in "$@"; do
             if [[ "$arg" == "--batch" ]]; then
-                echo "batch"
                 batch=1
             elif [[ "$arg" =~ '^--input=(.*)$' ]]; then
                 input=$match[1]
