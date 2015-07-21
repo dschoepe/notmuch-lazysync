@@ -1,4 +1,4 @@
-# notmuch-lazysync -- tool for synchronzing notmuch tags
+# notmuch-lazysync -- synchronizing notmuch tags through dropbox
 
 This is a simple tool for synchronizing tag information for the
 [notmuch](http://notmuchmail.org/) mail client between machines by
