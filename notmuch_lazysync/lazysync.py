@@ -120,13 +120,14 @@ def markseen(row_id):
 def replay(args):
     tmpfile = NamedTemporaryFile(mode='w', delete=False)
     query_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    host = gethost()
     cursor.execute('''
       SELECT c.id, c.cmd
       FROM commands c
       WHERE NOT EXISTS
         (SELECT s.id FROM seen s
          WHERE s.cmdid = c.id AND s.host = ?)
-      ORDER BY c.time ASC''', [gethost()])
+      ORDER BY c.time ASC''', [host])
     for row in cursor.fetchall():
         debug("Replaying command {0} (id: {1!s})".format(row[1], row[0]))
         cmd = row[1]
@@ -150,7 +151,10 @@ def replay(args):
         SELECT ?, c.id FROM commands c
          WHERE
            c.time <= ? AND
-           c.cmd LIKE 'notmuch tag%';''', [gethost(), query_time])
+           c.cmd LIKE 'notmuch tag%' AND
+           NOT EXISTS
+            (SELECT s.id FROM seen s
+             WHERE s.cmdid = c.id AND s.host = ?);''', [host, query_time, host])
     else:
         info("Failed to execute tag operations")
     if config.get('num_hosts', '') != '' and not args.no_gc:
