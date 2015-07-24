@@ -65,10 +65,10 @@ def load_config(args):
 def setup_tables():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS commands
-        (id INTEGER PRIMARY KEY AUTOINCREMENT, cmd TEXT, time TEXT);''')
+        (id INTEGER PRIMARY KEY, cmd TEXT, time TEXT);''')
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS seen
-        (id INTEGER PRIMARY KEY AUTOINCREMENT, host TEXT,
+        (id INTEGER PRIMARY KEY, host TEXT,
          cmdid INTEGER REFERENCES commands(id) ON DELETE CASCADE);''')
 
 def gethost():
