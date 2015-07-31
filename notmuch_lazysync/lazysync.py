@@ -87,7 +87,7 @@ def record(args):
     if cmd.startswith(TAGPREFIX) and not record_maildir:
         tags = parse_tags(cmd[len(TAGPREFIX):])[0]
         debug("Parsed tags: %s: %s" % (cmd[len(TAGPREFIX):], tags))
-        if frozenset(tags).issubset(maildir_tags):
+        if frozenset(map(lambda x: x[1:], tags)).issubset(maildir_tags):
             debug("Ignoring maildir-only tag command: %s" % cmd)
             return
     cursor.execute('''
