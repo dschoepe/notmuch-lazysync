@@ -217,6 +217,7 @@ def main():
     load_config(args)
     global db
     db = sqlite3.connect(os.path.expanduser(config['db_file']))
+    db.execute('pragma foreign_keys=ON')
     global cursor
     cursor = db.cursor()
     try:
